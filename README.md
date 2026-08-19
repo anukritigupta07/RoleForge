@@ -1,6 +1,6 @@
 # RoleForge 🚀
 
-### AI-Powered Resume Intelligence & Interview Preparation Platform
+### AI-Powered Resume Intelligence
 
 RoleForge is a full-stack AI-powered career platform designed to simulate a real-world recruitment product. It helps candidates **analyze resumes against job descriptions, identify skill gaps, generate ATS-optimized resumes, and prepare for interviews using AI-generated questions**.
 
