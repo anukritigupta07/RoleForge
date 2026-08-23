@@ -1,22 +1,5 @@
 {
-  "name": "roleforge",
-  "version": "1.0.0",
-  "description": "RoleForge is a full-stack AI-powered career platform designed to simulate a real-world recruitment product. It helps candidates **analyze resumes against job descriptions, identify skill gaps, generate ATS-optimized resumes, and prepare for interviews using AI-generated questions**.",
-  "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx nodemon server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "bcrypt": "^6.0.0",
-    "bcryptjs": "^3.0.3",
-    "cookie-parser": "^1.4.7",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.9.3"
+    "sass": "^1.103.1"
   }
 }
