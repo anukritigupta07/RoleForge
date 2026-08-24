@@ -522,40 +522,6 @@ npm run dev
 
 The application will then be available locally.
 
----
-
-# 🧩 API Architecture
-
-Example endpoints:
-
-```text
-/auth
-    POST   /register
-    POST   /login
-    POST   /logout
-
-/resume
-    POST   /upload
-    GET    /:id
-    DELETE /:id
-
-/jobs
-    POST   /analyze
-    GET    /:id
-
-/skills
-    POST   /analyze-gap
-
-/interview
-    POST   /generate
-    GET    /:id
-
-/resume-generator
-    POST   /generate
-    POST   /pdf
-```
-
----
 
 # 📈 Future Enhancements
 
@@ -621,7 +587,6 @@ That shift—from **document creation to candidate intelligence**—is the core 
 
 **Anukriti Gupta**
 
-B.Tech — Information Technology
 
 Interested in Full Stack Development, DevOps, Cloud Computing, and Generative AI.
 
