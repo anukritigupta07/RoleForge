@@ -591,13 +591,3 @@ That shift—from **document creation to candidate intelligence**—is the core 
 Interested in Full Stack Development, DevOps, Cloud Computing, and Generative AI.
 
 ---
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-<p align="center">
-  Built with React, Node.js, MongoDB, Gemini & Puppeteer.
-</p>
