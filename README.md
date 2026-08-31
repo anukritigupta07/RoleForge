@@ -411,32 +411,7 @@ RoleForge can then generate interview questions specifically around the candidat
 
 ---
 
-# 🧪 Example AI Prompt Strategy
 
-The backend can provide Gemini with structured context such as:
-
-```text
-Candidate Skills:
-React.js, Node.js, Express.js, MongoDB, Git
-
-Target Role:
-Full Stack Developer
-
-Required Skills:
-React.js, Node.js, Express.js, MongoDB, Docker,
-AWS, CI/CD
-
-Identify:
-1. Matching skills
-2. Missing skills
-3. Priority skill gaps
-4. Recommended interview questions
-5. Resume optimization suggestions
-```
-
-Structured prompting helps keep AI responses consistent and easier for the backend to process.
-
----
 
 # 🔒 Security Considerations
 
