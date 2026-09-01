@@ -401,15 +401,7 @@ Matched:
 ✓ REST APIs
 ✓ Git
 
-Missing:
-✗ Docker
-✗ AWS
-✗ CI/CD
-```
 
-RoleForge can then generate interview questions specifically around the candidate's current profile and missing requirements.
-
----
 
 
 
