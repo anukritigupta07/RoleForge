@@ -1,4 +1,4 @@
-// ── Shared Variables (mirrors home.scss theme) ────────────────────────────────
+// ── Shared Variables ────────────────────────────────────────────────────────
 $bg-page: #0d1117;
 $bg-card: #161b22;
 $bg-panel: #1c2230;
@@ -9,14 +9,44 @@ $text-muted: #7d8590;
 $accent: #ff2d78;
 $font-stack: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-// severity palette
 $severity-high: #ff4d4d;
 $severity-medium: #f5a623;
 $severity-low: #3fb950;
 
-*::-webkit-scrollbar {
-    display: none;
+*::-webkit-scrollbar { display: none; }
+
+// ── Loading Screen ────────────────────────────────────────────────────────────
+.loading-screen {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: $bg-page;
+    color: $text-primary;
+    font-family: $font-stack;
+
+    h1 {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: $text-muted;
+
+        &::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid $border-color;
+            border-top-color: $accent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+    }
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 // ── Page Shell ────────────────────────────────────────────────────────────────
 .interview-page {
@@ -31,7 +61,6 @@ $severity-low: #3fb950;
     box-sizing: border-box;
 }
 
-// ── 3-Column Layout ───────────────────────────────────────────────────────────
 .interview-layout {
     display: flex;
     width: 100%;
@@ -57,10 +86,13 @@ $severity-low: #3fb950;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 0.25rem;
+    gap: 1.5rem;
 
-
-
+    .nav-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
 
     &__label {
         font-size: 0.7rem;
@@ -108,6 +140,41 @@ $severity-low: #3fb950;
         align-items: center;
         flex-shrink: 0;
     }
+
+    // pinned CTA at the bottom of the nav
+    .primary-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+// ── Buttons (shared) ───────────────────────────────────────────────────────────
+.button {
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding-block: 0.75rem;
+    border-radius: 0.6rem;
+    font-family: $font-stack;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+
+    &:active { transform: scale(0.98); }
+    &:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+}
+
+.primary-button {
+    color: $text-primary;
+    background: linear-gradient(135deg, $accent, #c4185e);
+    box-shadow: 0 8px 20px -8px rgba($accent, 0.55);
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px -8px rgba($accent, 0.65);
+    }
 }
 
 // ── Center Content ────────────────────────────────────────────────────────────
@@ -115,21 +182,11 @@ $severity-low: #3fb950;
     flex: 1;
     padding: 1.75rem 2rem;
     overflow-y: auto;
-    min-height: initial;
     max-height: calc(100vh - 3rem);
     padding-bottom: 5rem;
     align-items: flex-start;
 
-
-
-
-
-
-
-
-    section {
-        min-height: 100%;
-    }
+    section { min-height: 100%; }
 }
 
 .content-header {
@@ -140,12 +197,7 @@ $severity-low: #3fb950;
     padding-bottom: 1rem;
     border-bottom: 1px solid $border-color;
 
-    h2 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: $text-primary;
-        margin: 0;
-    }
+    h2 { font-size: 1.1rem; font-weight: 700; color: $text-primary; margin: 0; }
 
     &__count {
         font-size: 0.8rem;
@@ -158,11 +210,7 @@ $severity-low: #3fb950;
 }
 
 // ── Question Cards ────────────────────────────────────────────────────────────
-.q-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
+.q-list { display: flex; flex-direction: column; gap: 0.75rem; }
 
 .q-card {
     background-color: $bg-panel;
@@ -171,9 +219,7 @@ $severity-low: #3fb950;
     overflow: hidden;
     transition: border-color 0.2s;
 
-    &:hover {
-        border-color: lighten($border-color, 8%);
-    }
+    &:hover { border-color: lighten($border-color, 8%); }
 
     &__header {
         display: flex;
@@ -196,25 +242,16 @@ $severity-low: #3fb950;
         margin-top: 2px;
     }
 
-    &__question {
-        flex: 1;
-        margin: 0;
-        font-size: 0.9rem;
-        font-weight: 500;
-        color: $text-primary;
-        line-height: 1.5;
-    }
+    &__question { flex: 1; margin: 0; font-size: 0.9rem; font-weight: 500; color: $text-primary; line-height: 1.5; }
 
     &__chevron {
         flex-shrink: 0;
+        display: flex;
         color: $text-muted;
         transition: transform 0.2s;
         margin-top: 2px;
 
-        &--open {
-            transform: rotate(180deg);
-            color: $accent;
-        }
+        &--open { transform: rotate(180deg); color: $accent; }
     }
 
     &__body {
@@ -231,12 +268,7 @@ $severity-low: #3fb950;
         flex-direction: column;
         gap: 0.4rem;
 
-        p {
-            margin: 0;
-            font-size: 0.835rem;
-            color: lighten($text-muted, 15%);
-            line-height: 1.6;
-        }
+        p { margin: 0; font-size: 0.835rem; color: lighten($text-muted, 15%); line-height: 1.6; }
     }
 
     &__tag {
@@ -248,17 +280,8 @@ $severity-low: #3fb950;
         border-radius: 0.25rem;
         width: fit-content;
 
-        &--intention {
-            color: #a78bfa;
-            background-color: rgba(#a78bfa, 0.1);
-            border: 1px solid rgba(#a78bfa, 0.2);
-        }
-
-        &--answer {
-            color: #3fb950;
-            background-color: rgba(#3fb950, 0.1);
-            border: 1px solid rgba(#3fb950, 0.2);
-        }
+        &--intention { color: #a78bfa; background-color: rgba(#a78bfa, 0.1); border: 1px solid rgba(#a78bfa, 0.2); }
+        &--answer { color: #3fb950; background-color: rgba(#3fb950, 0.1); border: 1px solid rgba(#3fb950, 0.2); }
     }
 }
 
@@ -269,7 +292,6 @@ $severity-low: #3fb950;
     gap: 0;
     position: relative;
 
-    // vertical timeline line
     &::before {
         content: '';
         position: absolute;
@@ -289,7 +311,6 @@ $severity-low: #3fb950;
     padding: 0.75rem 0 0.75rem 3.5rem;
     position: relative;
 
-    // dot on timeline
     &::before {
         content: '';
         position: absolute;
@@ -302,11 +323,7 @@ $severity-low: #3fb950;
         border: 2px solid $accent;
     }
 
-    &__header {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-    }
+    &__header { display: flex; align-items: center; gap: 0.6rem; }
 
     &__badge {
         font-size: 0.7rem;
@@ -318,12 +335,7 @@ $severity-low: #3fb950;
         border-radius: 2rem;
     }
 
-    &__focus {
-        margin: 0;
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: $text-primary;
-    }
+    &__focus { margin: 0; font-size: 0.95rem; font-weight: 600; color: $text-primary; }
 
     &__tasks {
         list-style: none;
@@ -333,24 +345,10 @@ $severity-low: #3fb950;
         flex-direction: column;
         gap: 0.35rem;
 
-        li {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-            font-size: 0.845rem;
-            color: lighten($text-muted, 12%);
-            line-height: 1.5;
-        }
+        li { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.845rem; color: lighten($text-muted, 12%); line-height: 1.5; }
     }
 
-    &__bullet {
-        flex-shrink: 0;
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background-color: $text-muted;
-        margin-top: 8px;
-    }
+    &__bullet { flex-shrink: 0; width: 5px; height: 5px; border-radius: 50%; background-color: $text-muted; margin-top: 8px; }
 }
 
 // ── Right Sidebar ─────────────────────────────────────────────────────────────
@@ -363,12 +361,8 @@ $severity-low: #3fb950;
     gap: 1.25rem;
 }
 
-.sidebar-divider {
-    height: 1px;
-    background-color: $border-color;
-}
+.sidebar-divider { height: 1px; background-color: $border-color; }
 
-// Match Score
 .match-score {
     display: flex;
     flex-direction: column;
@@ -395,41 +389,16 @@ $severity-low: #3fb950;
         justify-content: center;
         border: 4px solid;
 
-        &.score--high {
-            border-color: $severity-low;
-        }
-
-        &.score--mid {
-            border-color: $severity-medium;
-        }
-
-        &.score--low {
-            border-color: $severity-high;
-        }
+        &.score--high { border-color: $severity-low; }
+        &.score--mid { border-color: $severity-medium; }
+        &.score--low { border-color: $severity-high; }
     }
 
-    &__value {
-        font-size: 1.6rem;
-        font-weight: 800;
-        color: $text-primary;
-        line-height: 1;
-    }
-
-    &__pct {
-        font-size: 0.75rem;
-        color: $text-muted;
-        margin-top: -2px;
-    }
-
-    &__sub {
-        margin: 0;
-        font-size: 0.75rem;
-        color: $severity-low;
-        text-align: center;
-    }
+    &__value { font-size: 1.6rem; font-weight: 800; color: $text-primary; line-height: 1; }
+    &__pct { font-size: 0.75rem; color: $text-muted; margin-top: -2px; }
+    &__sub { margin: 0; font-size: 0.75rem; color: $severity-low; text-align: center; }
 }
 
-// Skill Gaps
 .skill-gaps {
     display: flex;
     flex-direction: column;
@@ -444,11 +413,7 @@ $severity-low: #3fb950;
         margin: 0;
     }
 
-    &__list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
+    &__list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 }
 
 .skill-tag {
@@ -459,21 +424,7 @@ $severity-low: #3fb950;
     border: 1px solid;
     cursor: default;
 
-    &--high {
-        color: $severity-high;
-        background-color: rgba($severity-high, 0.1);
-        border-color: rgba($severity-high, 0.25);
-    }
-
-    &--medium {
-        color: $severity-medium;
-        background-color: rgba($severity-medium, 0.1);
-        border-color: rgba($severity-medium, 0.25);
-    }
-
-    &--low {
-        color: $severity-low;
-        background-color: rgba($severity-low, 0.1);
-        border-color: rgba($severity-low, 0.25);
-    }
+    &--high { color: $severity-high; background-color: rgba($severity-high, 0.1); border-color: rgba($severity-high, 0.25); }
+    &--medium { color: $severity-medium; background-color: rgba($severity-medium, 0.1); border-color: rgba($severity-medium, 0.25); }
+    &--low { color: $severity-low; background-color: rgba($severity-low, 0.1); border-color: rgba($severity-low, 0.25); }
 }

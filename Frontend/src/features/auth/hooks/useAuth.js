@@ -28,6 +28,7 @@ export const useAuth = () => {
             const data = await register({ username, email, password })
             setUser(data.user)
         } catch (err) {
+            
 
         } finally {
             setLoading(false)
