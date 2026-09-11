@@ -1,116 +1,739 @@
 const { GoogleGenAI } = require("@google/genai")
 const { z } = require("zod")
-const { zodToJsonSchema } = require("zod-to-json-schema")
 const puppeteer = require("puppeteer")
+
+
+// =====================================================
+// Gemini Client
+// =====================================================
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
 })
 
 
-const interviewReportSchema = z.object({
-    matchScore: z.number().describe("A score between 0 and 100 indicating how well the candidate's profile matches the job describe"),
-    technicalQuestions: z.array(z.object({
-        question: z.string().describe("The technical question can be asked in the interview"),
-        intention: z.string().describe("The intention of interviewer behind asking this question"),
-        answer: z.string().describe("How to answer this question, what points to cover, what approach to take etc.")
-    })).describe("Technical questions that can be asked in the interview along with their intention and how to answer them"),
-    behavioralQuestions: z.array(z.object({
-        question: z.string().describe("The technical question can be asked in the interview"),
-        intention: z.string().describe("The intention of interviewer behind asking this question"),
-        answer: z.string().describe("How to answer this question, what points to cover, what approach to take etc.")
-    })).describe("Behavioral questions that can be asked in the interview along with their intention and how to answer them"),
-    skillGaps: z.array(z.object({
-        skill: z.string().describe("The skill which the candidate is lacking"),
-        severity: z.enum([ "low", "medium", "high" ]).describe("The severity of this skill gap, i.e. how important is this skill for the job and how much it can impact the candidate's chances")
-    })).describe("List of skill gaps in the candidate's profile along with their severity"),
-    preparationPlan: z.array(z.object({
-        day: z.number().describe("The day number in the preparation plan, starting from 1"),
-        focus: z.string().describe("The main focus of this day in the preparation plan, e.g. data structures, system design, mock interviews etc."),
-        tasks: z.array(z.string()).describe("List of tasks to be done on this day to follow the preparation plan, e.g. read a specific book or article, solve a set of problems, watch a video etc.")
-    })).describe("A day-wise preparation plan for the candidate to follow in order to prepare for the interview effectively"),
-    title: z.string().describe("The title of the job for which the interview report is generated"),
+// =====================================================
+// Zod Schema
+// Used AFTER Gemini returns JSON
+// =====================================================
+
+const technicalQuestionSchema = z.object({
+    question: z.string(),
+    intention: z.string(),
+    answer: z.string()
 })
 
-async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
+const behavioralQuestionSchema = z.object({
+    question: z.string(),
+    intention: z.string(),
+    answer: z.string()
+})
+
+const skillGapSchema = z.object({
+    skill: z.string(),
+    severity: z.enum(["low", "medium", "high"])
+})
+
+const preparationDaySchema = z.object({
+    day: z.number(),
+    focus: z.string(),
+    tasks: z.array(z.string())
+})
+
+const interviewReportSchema = z.object({
+    matchScore: z.number().min(0).max(100),
+
+    technicalQuestions: z.array(
+        technicalQuestionSchema
+    ),
+
+    behavioralQuestions: z.array(
+        behavioralQuestionSchema
+    ),
+
+    skillGaps: z.array(
+        skillGapSchema
+    ),
+
+    preparationPlan: z.array(
+        preparationDaySchema
+    )
+})
 
 
-    const prompt = `Generate an interview report for a candidate with the following details:
-                        Resume: ${resume}
-                        Self Description: ${selfDescription}
-                        Job Description: ${jobDescription}
+// =====================================================
+// Explicit JSON Schema for Gemini
+// =====================================================
+
+const interviewReportJsonSchema = {
+    type: "object",
+
+    properties: {
+
+        matchScore: {
+            type: "number",
+            description:
+                "A score from 0 to 100 showing how well the candidate matches the job."
+        },
+
+        technicalQuestions: {
+            type: "array",
+            description:
+                "Exactly 5 technical interview questions.",
+            items: {
+                type: "object",
+
+                properties: {
+
+                    question: {
+                        type: "string",
+                        description:
+                            "The technical interview question."
+                    },
+
+                    intention: {
+                        type: "string",
+                        description:
+                            "What the interviewer wants to evaluate."
+                    },
+
+                    answer: {
+                        type: "string",
+                        description:
+                            "How the candidate should answer the question."
+                    }
+                },
+
+                required: [
+                    "question",
+                    "intention",
+                    "answer"
+                ]
+            }
+        },
+
+        behavioralQuestions: {
+            type: "array",
+            description:
+                "Exactly 5 behavioral interview questions.",
+
+            items: {
+                type: "object",
+
+                properties: {
+
+                    question: {
+                        type: "string",
+                        description:
+                            "The behavioral interview question."
+                    },
+
+                    intention: {
+                        type: "string",
+                        description:
+                            "What behavior or quality the interviewer wants to evaluate."
+                    },
+
+                    answer: {
+                        type: "string",
+                        description:
+                            "How the candidate should answer the question."
+                    }
+                },
+
+                required: [
+                    "question",
+                    "intention",
+                    "answer"
+                ]
+            }
+        },
+
+        skillGaps: {
+            type: "array",
+            description:
+                "At least 3 skill gaps relevant to the target job.",
+
+            items: {
+                type: "object",
+
+                properties: {
+
+                    skill: {
+                        type: "string",
+                        description:
+                            "The skill the candidate should improve."
+                    },
+
+                    severity: {
+                        type: "string",
+                        enum: [
+                            "low",
+                            "medium",
+                            "high"
+                        ],
+                        description:
+                            "Importance of the skill gap."
+                    }
+                },
+
+                required: [
+                    "skill",
+                    "severity"
+                ]
+            }
+        },
+
+        preparationPlan: {
+            type: "array",
+            description:
+                "Exactly 7 days of interview preparation.",
+
+            items: {
+                type: "object",
+
+                properties: {
+
+                    day: {
+                        type: "integer",
+                        description:
+                            "Preparation day number from 1 to 7."
+                    },
+
+                    focus: {
+                        type: "string",
+                        description:
+                            "Main topic for the day."
+                    },
+
+                    tasks: {
+                        type: "array",
+
+                        items: {
+                            type: "string"
+                        },
+
+                        description:
+                            "Specific preparation tasks."
+                    }
+                },
+
+                required: [
+                    "day",
+                    "focus",
+                    "tasks"
+                ]
+            }
+        }
+    },
+
+    required: [
+        "matchScore",
+        "technicalQuestions",
+        "behavioralQuestions",
+        "skillGaps",
+        "preparationPlan"
+    ]
+}
+
+
+// =====================================================
+// Generate Interview Report
+// =====================================================
+
+async function generateInterviewReport({
+    resume,
+    selfDescription,
+    jobDescription
+}) {
+
+    const prompt = `
+You are an expert technical interviewer and hiring manager.
+
+Analyze the candidate's resume and self-description against
+the target job description.
+
+========================
+CANDIDATE RESUME
+========================
+
+${resume}
+
+========================
+SELF DESCRIPTION
+========================
+
+${selfDescription || "Not provided"}
+
+========================
+JOB DESCRIPTION
+========================
+
+${jobDescription}
+
+========================
+TASK
+========================
+
+Generate an interview preparation report.
+
+You MUST return:
+
+1. matchScore
+   - Number between 0 and 100.
+
+2. technicalQuestions
+   - EXACTLY 5 objects.
+
+3. behavioralQuestions
+   - EXACTLY 5 objects.
+
+4. skillGaps
+   - AT LEAST 3 objects.
+
+5. preparationPlan
+   - EXACTLY 7 objects.
+   - Days must be 1 through 7.
+
+========================
+VERY IMPORTANT
+========================
+
+technicalQuestions MUST look like:
+
+[
+  {
+    "question": "...",
+    "intention": "...",
+    "answer": "..."
+  }
+]
+
+behavioralQuestions MUST look like:
+
+[
+  {
+    "question": "...",
+    "intention": "...",
+    "answer": "..."
+  }
+]
+
+skillGaps MUST look like:
+
+[
+  {
+    "skill": "...",
+    "severity": "low"
+  }
+]
+
+preparationPlan MUST look like:
+
+[
+  {
+    "day": 1,
+    "focus": "...",
+    "tasks": ["...", "..."]
+  }
+]
+
+DO NOT return strings inside these arrays.
+
+DO NOT return:
+
+[
+  "question 1",
+  "question 2"
+]
+
+Instead return objects with the required fields.
+
+Do not copy the resume or job description into the answer.
+
+Do not return explanations outside the JSON.
+
+Do not invent experience that is not present in the resume.
+
+Return ONLY JSON.
 `
 
-    const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: zodToJsonSchema(interviewReportSchema),
+
+    try {
+
+        console.log(
+            "Sending interview report request to Gemini..."
+        )
+
+
+        const response =
+            await ai.models.generateContent({
+
+                model:
+                    "gemini-3-flash-preview",
+
+                contents:
+                    prompt,
+
+                config: {
+
+                    responseMimeType:
+                        "application/json",
+
+                    responseSchema:
+                        interviewReportJsonSchema
+
+                }
+
+            })
+
+
+        if (
+            !response ||
+            !response.text
+        ) {
+
+            throw new Error(
+                "Gemini returned an empty response."
+            )
         }
-    })
-
-    return JSON.parse(response.text)
 
 
+        console.log(
+            "RAW GEMINI RESPONSE:"
+        )
+
+        console.log(
+            response.text
+        )
+
+
+        // ---------------------------------------------
+        // Parse JSON
+        // ---------------------------------------------
+
+        let result
+
+        try {
+
+            result =
+                JSON.parse(
+                    response.text
+                )
+
+        } catch (error) {
+
+            console.error(
+                "JSON parsing failed:",
+                error
+            )
+
+            throw new Error(
+                "Gemini returned invalid JSON."
+            )
+        }
+
+
+        // ---------------------------------------------
+        // Validate with Zod
+        // ---------------------------------------------
+
+        const validatedResult =
+            interviewReportSchema.safeParse(
+                result
+            )
+
+
+        if (
+            !validatedResult.success
+        ) {
+
+            console.error(
+                "AI RESPONSE DOES NOT MATCH SCHEMA:"
+            )
+
+            console.error(
+                validatedResult.error
+                    .issues
+            )
+
+            throw new Error(
+                "Gemini returned data in an invalid format."
+            )
+        }
+
+
+        const report =
+            validatedResult.data
+
+
+        // ---------------------------------------------
+        // Validate number of questions
+        // ---------------------------------------------
+
+        if (
+            report.technicalQuestions.length < 5
+        ) {
+
+            throw new Error(
+                `Gemini returned only ${report.technicalQuestions.length} technical questions.`
+            )
+        }
+
+
+        if (
+            report.behavioralQuestions.length < 5
+        ) {
+
+            throw new Error(
+                `Gemini returned only ${report.behavioralQuestions.length} behavioral questions.`
+            )
+        }
+
+
+        if (
+            report.skillGaps.length < 3
+        ) {
+
+            throw new Error(
+                `Gemini returned only ${report.skillGaps.length} skill gaps.`
+            )
+        }
+
+
+        if (
+            report.preparationPlan.length < 7
+        ) {
+
+            throw new Error(
+                `Gemini returned only ${report.preparationPlan.length} preparation days.`
+            )
+        }
+
+
+        console.log(
+            "Interview report successfully validated."
+        )
+
+
+        return report
+
+    } catch (error) {
+
+        console.error(
+            "===================================="
+        )
+
+        console.error(
+            "GEMINI INTERVIEW REPORT ERROR"
+        )
+
+        console.error(
+            error
+        )
+
+        console.error(
+            "===================================="
+        )
+
+        throw error
+    }
 }
 
 
+// =====================================================
+// Generate PDF From HTML
+// =====================================================
 
-async function generatePdfFromHtml(htmlContent) {
-    const browser = await puppeteer.launch()
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: "networkidle0" })
+async function generatePdfFromHtml(
+    htmlContent
+) {
 
-    const pdfBuffer = await page.pdf({
-        format: "A4", margin: {
-            top: "20mm",
-            bottom: "20mm",
-            left: "15mm",
-            right: "15mm"
-        }
-    })
+    const browser =
+        await puppeteer.launch({
+            headless: true
+        })
 
-    await browser.close()
+    try {
 
-    return pdfBuffer
+        const page =
+            await browser.newPage()
+
+
+        await page.setContent(
+            htmlContent,
+            {
+                waitUntil: "networkidle0"
+            }
+        )
+
+
+        const pdfBuffer =
+            await page.pdf({
+
+                format: "A4",
+
+                printBackground: true,
+
+                margin: {
+
+                    top: "20mm",
+
+                    bottom: "20mm",
+
+                    left: "15mm",
+
+                    right: "15mm"
+
+                }
+
+            })
+
+
+        return pdfBuffer
+
+    } finally {
+
+        await browser.close()
+    }
 }
 
-async function generateResumePdf({ resume, selfDescription, jobDescription }) {
 
-    const resumePdfSchema = z.object({
-        html: z.string().describe("The HTML content of the resume which can be converted to PDF using any library like puppeteer")
-    })
+// =====================================================
+// Resume PDF Schema
+// =====================================================
 
-    const prompt = `Generate resume for a candidate with the following details:
-                        Resume: ${resume}
-                        Self Description: ${selfDescription}
-                        Job Description: ${jobDescription}
+const resumePdfSchema = {
+    type: "object",
 
-                        the response should be a JSON object with a single field "html" which contains the HTML content of the resume which can be converted to PDF using any library like puppeteer.
-                        The resume should be tailored for the given job description and should highlight the candidate's strengths and relevant experience. The HTML content should be well-formatted and structured, making it easy to read and visually appealing.
-                        The content of resume should be not sound like it's generated by AI and should be as close as possible to a real human-written resume.
-                        you can highlight the content using some colors or different font styles but the overall design should be simple and professional.
-                        The content should be ATS friendly, i.e. it should be easily parsable by ATS systems without losing important information.
-                        The resume should not be so lengthy, it should ideally be 1-2 pages long when converted to PDF. Focus on quality rather than quantity and make sure to include all the relevant information that can increase the candidate's chances of getting an interview call for the given job description.
-                    `
+    properties: {
 
-    const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: zodToJsonSchema(resumePdfSchema),
+        html: {
+            type: "string",
+            description:
+                "Complete HTML content of the resume."
         }
-    })
 
+    },
 
-    const jsonContent = JSON.parse(response.text)
-
-    const pdfBuffer = await generatePdfFromHtml(jsonContent.html)
-
-    return pdfBuffer
-
+    required: ["html"]
 }
 
-module.exports = { generateInterviewReport, generateResumePdf }
+
+// =====================================================
+// Generate Resume PDF
+// =====================================================
+
+async function generateResumePdf({
+    resume,
+    selfDescription,
+    jobDescription
+}) {
+
+    const prompt = `
+Create a professional ATS-friendly resume.
+
+CURRENT RESUME:
+${resume}
+
+SELF DESCRIPTION:
+${selfDescription || "Not provided"}
+
+TARGET JOB:
+${jobDescription}
+
+Requirements:
+
+- Return ONLY JSON.
+- Return one field called "html".
+- The html field must contain the complete resume.
+- Tailor the resume to the target job.
+- Do not invent experience.
+- Do not invent education.
+- Do not invent achievements.
+- Do not invent projects.
+- Keep it professional.
+- Keep it ATS friendly.
+- Keep it around 1-2 pages.
+`
+
+
+    try {
+
+        const response =
+            await ai.models.generateContent({
+
+                model:
+                    "gemini-3-flash-preview",
+
+                contents:
+                    prompt,
+
+                config: {
+
+                    responseMimeType:
+                        "application/json",
+
+                    responseSchema:
+                        resumePdfSchema
+
+                }
+
+            })
+
+
+        if (
+            !response ||
+            !response.text
+        ) {
+
+            throw new Error(
+                "Gemini returned an empty resume response."
+            )
+        }
+
+
+        const jsonContent =
+            JSON.parse(
+                response.text
+            )
+
+
+        if (
+            !jsonContent.html
+        ) {
+
+            throw new Error(
+                "Gemini did not return resume HTML."
+            )
+        }
+
+
+        const pdfBuffer =
+            await generatePdfFromHtml(
+                jsonContent.html
+            )
+
+
+        return pdfBuffer
+
+    } catch (error) {
+
+        console.error(
+            "Resume PDF Error:",
+            error
+        )
+
+        throw error
+    }
+}
+
+
+// =====================================================
+// Export
+// =====================================================
+
+module.exports = {
+    generateInterviewReport,
+    generateResumePdf
+}
